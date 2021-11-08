@@ -3,21 +3,24 @@ import * as webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import StatoscopePlugin from '@statoscope/webpack-plugin';
 
-import ModuleLogger from './plugins/moduleLogger';
+import FindUnusedFiles from './plugins/findUnused';
 
 const config: webpack.Configuration = {
     mode: 'production',
     entry: {
-        root: './src/pages/root.tsx',
-        root2: './src/pages/root2.tsx',
+        root: path.resolve(__dirname, 'src', 'pages', 'root.tsx'),
+        root2: path.resolve(__dirname, 'src', 'pages', 'root2.tsx'),
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].[contenthash].js',
     },
+
     plugins: [
-        new HtmlWebpackPlugin(),
-        new ModuleLogger(),
+        new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, 'src', 'index.html'),
+        }),
+        new FindUnusedFiles('src/**'),
         new StatoscopePlugin({
             saveStatsTo: 'stats.json',
             saveOnlyStats: false,
@@ -25,12 +28,21 @@ const config: webpack.Configuration = {
         }),
     ],
     resolve: {
-        fallback: {
-            "buffer": require.resolve("buffer"),
-            "stream": false,
+        alias: {
+            'bn.js': false,
+            'crypto-browserify': path.resolve(__dirname, 'cb-uuid.ts'),
         },
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
+
     module: {
+        rules: [
+            {
+                test: /\.(tsx|ts)$/,
+                exclude: /node_modules/,
+                loader: 'ts-loader',
+            },
+        ],
     },
 };
 
